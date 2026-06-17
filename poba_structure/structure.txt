@@ -1,0 +1,114 @@
+﻿POBA Laravel Project - Complete File & Folder Structure
+=======================================================
+poba/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── Admin/
+│   │   │   │   ├── AdminUserController.php
+│   │   │   │   ├── AlumniUserController.php
+│   │   │   │   ├── CmsController.php
+│   │   │   │   ├── EventController.php
+│   │   │   │   ├── GalleryController.php
+│   │   │   │   ├── DashboardController.php
+│   │   │   │   └── PromotionController.php
+│   │   │   ├── Auth/
+│   │   │   │   └── LoginController.php
+│   │   │   └── Customer/
+│   │   │       ├── HomeController.php
+│   │   │       ├── AlumniController.php
+│   │   │       ├── EventController.php
+│   │   │       ├── GalleryController.php
+│   │   │       ├── NewsController.php
+│   │   │       ├── MemberController.php
+│   │   │       └── ContactController.php
+│   │   └── Middleware/
+│   │       ├── AdminMiddleware.php
+│   │       └── AlumniMiddleware.php
+│   └── Models/
+│       ├── User.php
+│       ├── AlumniUser.php
+│       ├── Event.php
+│       ├── EventParticipant.php
+│       ├── GalleryFolder.php
+│       ├── GalleryImage.php
+│       ├── News.php
+│       ├── Committee.php
+│       ├── CommitteeMember.php
+│       ├── Promotion.php
+│       ├── Faq.php
+│       └── CmsSetting.php
+├── database/
+│   └── migrations/
+│       ├── 2024_01_01_000001_create_alumni_users_table.php
+│       ├── 2024_01_01_000002_create_events_table.php
+│       ├── 2024_01_01_000003_create_event_participants_table.php
+│       ├── 2024_01_01_000004_create_gallery_folders_table.php
+│       ├── 2024_01_01_000005_create_gallery_images_table.php
+│       ├── 2024_01_01_000006_create_news_table.php
+│       ├── 2024_01_01_000007_create_committees_table.php
+│       ├── 2024_01_01_000008_create_committee_members_table.php
+│       ├── 2024_01_01_000009_create_promotions_table.php
+│       ├── 2024_01_01_000010_create_faqs_table.php
+│       └── 2024_01_01_000011_create_cms_settings_table.php
+├── resources/
+│   └── views/
+│       ├── layouts/
+│       │   ├── app.blade.php          (Customer layout)
+│       │   └── admin.blade.php        (Admin layout)
+│       ├── auth/
+│       │   └── login.blade.php
+│       ├── customer/
+│       │   ├── home.blade.php
+│       │   ├── about.blade.php
+│       │   ├── news/
+│       │   │   ├── index.blade.php
+│       │   │   └── show.blade.php
+│       │   ├── events/
+│       │   │   └── index.blade.php
+│       │   ├── alumni/
+│       │   │   ├── index.blade.php
+│       │   │   └── show.blade.php
+│       │   ├── star-alumni/
+│       │   │   └── index.blade.php
+│       │   ├── gallery/
+│       │   │   ├── index.blade.php
+│       │   │   └── show.blade.php
+│       │   ├── member/
+│       │   │   └── register.blade.php
+│       │   ├── contact.blade.php
+│       │   └── promotions.blade.php
+│       └── admin/
+│           ├── dashboard.blade.php
+│           ├── alumni/
+│           │   ├── index.blade.php
+│           │   ├── approvals.blade.php
+│           │   └── show.blade.php
+│           ├── events/
+│           │   ├── index.blade.php
+│           │   ├── create.blade.php
+│           │   ├── edit.blade.php
+│           │   └── participants.blade.php
+│           ├── gallery/
+│           │   ├── index.blade.php
+│           │   ├── create.blade.php
+│           │   ├── edit.blade.php
+│           │   └── images.blade.php
+│           ├── cms/
+│           │   ├── homepage.blade.php
+│           │   ├── about.blade.php
+│           │   ├── news.blade.php
+│           │   ├── verticals.blade.php
+│           │   ├── contact.blade.php
+│           │   ├── promotions.blade.php
+│           │   └── faqs.blade.php
+│           ├── admin-users/
+│           │   ├── index.blade.php
+│           │   └── create.blade.php
+│           ├── footer.blade.php
+│           └── seo.blade.php
+├── routes/
+│   └── web.php
+└── public/
+    └── css/
+        └── poba.css

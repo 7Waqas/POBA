@@ -1,0 +1,1 @@
+<?php /**PATH E:\poba-new\POBA-main\resources\views/errors/403.blade.php ENDPATH**/ ?>
