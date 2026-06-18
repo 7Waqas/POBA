@@ -3,13 +3,16 @@
 @section('title','Alumni - POBA')
 @section('content')
 
-<div class="page-header">
-    <h1>Alumni</h1>
-    <div class="underline"></div>
-</div>
-
-<section class="section-pad">
+<section class="section-pad" style="padding-top: 40px;">
     <div class="container">
+        
+        {{-- Clean & Centered Page Title with Exact Underline --}}
+        <div style="text-align: center; margin-bottom: 40px;">
+            <h1 style="font-size: 2.5rem; font-weight: 700; color: #086666; display: inline-block; padding-bottom: 8px; border-bottom: 4px solid var(--orange); line-height: 1.2;">
+                Alumni
+            </h1>
+        </div>
+
         <form method="GET" action="{{ route('alumni.index') }}">
             <div class="search-bar">
                 <input type="text" name="search" class="search-input" placeholder="Search by Name" value="{{ request('search') }}">
@@ -20,7 +23,7 @@
                 <select name="field_work" class="filter-select">
                     <option value="">Field of Work</option>
                     @foreach(['Navy','Engineering','Medicine','Law','Business','Education','IT','Other'] as $f)
-                    <option value="{{ $f }}" {{ request('field_work')==$f ? 'selected' : '' }}>{{ $f }}</option>
+                    <option value="{{ $f }}" {{ request('class_year')==$y ? 'selected' : '' }}>{{ $f }}</option>
                     @endforeach
                 </select>
                 <select name="city" class="filter-select">

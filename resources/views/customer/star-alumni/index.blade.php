@@ -3,13 +3,16 @@
 @section('title','Star Alumni - POBA')
 @section('content')
 
-<div class="page-header">
-    <h1>Star Alumni</h1>
-    <div class="underline"></div>
-</div>
-
-<section class="section-pad">
+<section class="section-pad" style="padding-top: 40px;">
     <div class="container">
+        
+        {{-- Clean & Centered Page Title with Full Text Underline --}}
+        <div style="text-align: center; margin-bottom: 40px;">
+            <h1 style="font-size: 2.5rem; font-weight: 700; color: #086666; display: inline-block; padding-bottom: 8px; border-bottom: 4px solid var(--orange); line-height: 1.2;">
+                Star Alumni
+            </h1>
+        </div>
+
         <form method="GET" action="{{ route('star.alumni') }}">
             <div class="search-bar">
                 <input type="text" name="search" class="search-input" placeholder="Search by Name" value="{{ request('search') }}">

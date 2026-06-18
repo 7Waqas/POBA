@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\GalleryController;
 use App\Http\Controllers\Admin\CmsController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Customer\ProfileController;
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 Route::get('/login', [LoginController::class, 'showLogin'])->name('login');
@@ -39,9 +40,26 @@ Route::get('/become-a-member', [MemberController::class, 'index'])->name('member
 Route::post('/become-a-member',[MemberController::class, 'store'])->name('member.store');
 
 // Alumni-only routes
+// Route::middleware('alumni')->group(function () {
+//     Route::post('/events/{id}/register', [CustomerEventController::class, 'register'])->name('events.register');
+//     Route::post('/events/{id}/cancel',   [CustomerEventController::class, 'cancel'])->name('events.cancel');
+// });
+
+// Alumni-only routes
 Route::middleware('alumni')->group(function () {
+
     Route::post('/events/{id}/register', [CustomerEventController::class, 'register'])->name('events.register');
     Route::post('/events/{id}/cancel',   [CustomerEventController::class, 'cancel'])->name('events.cancel');
+
+    // Profile
+    Route::get('/profile', [App\Http\Controllers\Customer\ProfileController::class, 'edit'])
+        ->name('profile.edit');
+
+    Route::put('/profile', [App\Http\Controllers\Customer\ProfileController::class, 'update'])
+        ->name('profile.update');
+
+    Route::post('/profile/password', [App\Http\Controllers\Customer\ProfileController::class, 'changePassword'])
+        ->name('profile.password');
 });
 
 // ── Admin Panel ───────────────────────────────────────────────────────────────
@@ -60,6 +78,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {
         Route::post('/alumni-users/{id}/reject',        [AlumniUserController::class, 'reject'])->name('alumni.reject');
         Route::post('/alumni-users/{id}/toggle-status', [AlumniUserController::class, 'toggleStatus'])->name('alumni.toggleStatus');
         Route::post('/alumni-users/{id}/star',          [AlumniUserController::class, 'markStar'])->name('alumni.star');
+        Route::post('/alumni-users/{id}/update-star-description', [AlumniUserController::class, 'updateStarDescription'])->name('alumni.updateStarDescription');
+Route::post('/alumni-users/{id}/remove-star', [AlumniUserController::class, 'removeStar'])->name('alumni.removeStar');
     });
 
     // Events

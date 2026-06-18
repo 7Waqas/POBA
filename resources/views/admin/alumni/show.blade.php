@@ -95,6 +95,26 @@
                   font-size:18px; cursor:pointer; color:#888; }
 .modal-box h3   { font-size:17px; font-weight:700; margin-bottom:18px; }
 
+/* ── Lightbox ── */
+.lightbox-overlay   { display:none; position:fixed; inset:0; background:rgba(0,0,0,.82);
+                      z-index:2000; align-items:center; justify-content:center;
+                      flex-direction:column; gap:14px; }
+.lightbox-overlay.open { display:flex; }
+.lightbox-inner     { position:relative; max-width:90vw; max-height:85vh;
+                      display:flex; align-items:center; justify-content:center; }
+.lightbox-inner img { max-width:88vw; max-height:82vh; border-radius:10px;
+                      object-fit:contain; box-shadow:0 8px 40px rgba(0,0,0,.5); }
+.lightbox-close     { position:fixed; top:18px; right:22px; background:rgba(255,255,255,.15);
+                      border:none; color:#fff; font-size:22px; width:38px; height:38px;
+                      border-radius:50%; cursor:pointer; display:flex; align-items:center;
+                      justify-content:center; transition:background .2s; z-index:2001; }
+.lightbox-close:hover { background:rgba(255,255,255,.3); }
+.lightbox-label     { color:#ccc; font-size:13px; letter-spacing:.3px; }
+.lightbox-pdf-msg   { background:#fff; border-radius:10px; padding:32px 40px; text-align:center; }
+.lightbox-pdf-msg p { margin:0 0 16px; font-size:15px; color:#333; }
+.lightbox-pdf-msg a { display:inline-block; padding:9px 24px; background:#0d9488; color:#fff;
+                      border-radius:8px; text-decoration:none; font-size:13px; font-weight:600; }
+
 @media(max-width:680px){
     .ap-row-2 { grid-template-columns:1fr; }
     .ap-sidebar { max-width:100%; }
@@ -108,10 +128,8 @@
         <a href="{{ url()->previous() }}" class="ap-back">← Back</a>
 
         <img src="{{ $user->profile_photo
-        ? (str_starts_with($user->profile_photo, 'http')
-            ? $user->profile_photo
-            : asset('storage/'.$user->profile_photo))
-        : 'https://placehold.co/180x180/1a7a7a/fff?text='.urlencode(substr($user->full_name,0,1)) }}"
+                ? asset('storage/'.$user->profile_photo)
+                : 'https://placehold.co/180x180/1a7a7a/fff?text='.urlencode(substr($user->full_name,0,1)) }}"
              alt="{{ $user->full_name }}" class="ap-avatar">
 
         <div class="ap-name">{{ $user->full_name }}</div>
@@ -133,11 +151,32 @@
         </form>
         @endif
 
-        @if($user->status === 'approved')
+        <!-- @if($user->status === 'approved')
         <button class="btn-star" onclick="document.getElementById('starModal').classList.add('open')">
             ★ Mark as Star Alumni
         </button>
-        @endif
+        @endif -->
+
+        @if($user->status === 'approved')
+    @if($user->is_star_alumni)
+        {{-- Already a star ── Edit & Remove buttons --}}
+        <button class="btn-star" onclick="openEditStarModal()">
+            ✎ Edit Star Description
+        </button>
+        <form method="POST" action="{{ route('admin.alumni.removeStar', $user->id) }}"
+              onsubmit="return confirm('Remove {{ $user->full_name }} from Star Alumni?');">
+            @csrf
+            <button type="submit" class="btn-star" style="border-color:#e53e3e;color:#e53e3e;">
+                ★ Remove Star
+            </button>
+        </form>
+    @else
+        {{-- Not a star ── Mark as Star button --}}
+        <button class="btn-star" onclick="openMarkStarModal()">
+            ★ Mark as Star Alumni
+        </button>
+    @endif
+@endif
     </div>
 
     {{-- ── Right Card ── --}}
@@ -284,15 +323,14 @@
                 <div class="ap-group">
                     <label class="ap-label">Upload CNIC:</label>
                     <div class="ap-file-row">
-                        <span>{{ $user->cnic_file ? basename($user->cnic_file) : 'national.jpg' }}</span>
+                        <span>{{ $user->cnic_file ? basename($user->cnic_file) : 'No file uploaded' }}</span>
                         @if($user->cnic_file)
-                        <a href="{{ asset('storage/'.$user->cnic_file) }}" target="_blank">
-                            <button type="button" class="ap-eye-btn" title="View CNIC">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="#0d9488" stroke-width="1.8"/><circle cx="12" cy="12" r="3" stroke="#0d9488" stroke-width="1.8"/></svg>
-                            </button>
-                        </a>
+                        <button type="button" class="ap-eye-btn" title="View CNIC"
+                                onclick="openLightbox('{{ asset('storage/'.$user->cnic_file) }}', 'CNIC Document', '{{ pathinfo($user->cnic_file, PATHINFO_EXTENSION) }}')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="#0d9488" stroke-width="1.8"/><circle cx="12" cy="12" r="3" stroke="#0d9488" stroke-width="1.8"/></svg>
+                        </button>
                         @else
-                        <button type="button" class="ap-eye-btn" title="No file">
+                        <button type="button" class="ap-eye-btn" title="No file uploaded" style="opacity:.35;cursor:not-allowed">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="#0d9488" stroke-width="1.8"/><circle cx="12" cy="12" r="3" stroke="#0d9488" stroke-width="1.8"/></svg>
                         </button>
                         @endif
@@ -306,15 +344,14 @@
                 <div class="ap-group">
                     <label class="ap-label">Profile Photo:</label>
                     <div class="ap-file-row">
-                        <span>{{ $user->profile_photo ? basename($user->profile_photo) : 'profile-image.jpg' }}</span>
+                        <span>{{ $user->profile_photo ? basename($user->profile_photo) : 'No file uploaded' }}</span>
                         @if($user->profile_photo)
-                        <a href="{{ asset('storage/'.$user->profile_photo) }}" target="_blank">
-                            <button type="button" class="ap-eye-btn" title="View Photo">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="#0d9488" stroke-width="1.8"/><circle cx="12" cy="12" r="3" stroke="#0d9488" stroke-width="1.8"/></svg>
-                            </button>
-                        </a>
+                        <button type="button" class="ap-eye-btn" title="View Profile Photo"
+                                onclick="openLightbox('{{ asset('storage/'.$user->profile_photo) }}', 'Profile Photo', '{{ pathinfo($user->profile_photo, PATHINFO_EXTENSION) }}')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="#0d9488" stroke-width="1.8"/><circle cx="12" cy="12" r="3" stroke="#0d9488" stroke-width="1.8"/></svg>
+                        </button>
                         @else
-                        <button type="button" class="ap-eye-btn" title="No file">
+                        <button type="button" class="ap-eye-btn" title="No file uploaded" style="opacity:.35;cursor:not-allowed">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke="#0d9488" stroke-width="1.8"/><circle cx="12" cy="12" r="3" stroke="#0d9488" stroke-width="1.8"/></svg>
                         </button>
                         @endif
@@ -355,8 +392,17 @@
     </div>
 </div>
 
+{{-- ── Lightbox Modal ── --}}
+<div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightboxOnBg(event)">
+    <button class="lightbox-close" onclick="closeLightbox()" title="Close">✕</button>
+    <div class="lightbox-inner" id="lightboxInner">
+        {{-- content injected by JS --}}
+    </div>
+    <div class="lightbox-label" id="lightboxLabel"></div>
+</div>
+
 {{-- Star Alumni Modal --}}
-<div class="modal-overlay" id="starModal">
+<!-- <div class="modal-overlay" id="starModal">
     <div class="modal-box">
         <button class="modal-close" onclick="document.getElementById('starModal').classList.remove('open')">✕</button>
         <h3>Add as Star Alumni</h3>
@@ -364,7 +410,7 @@
             @csrf
             <div class="ap-group" style="margin-bottom:20px">
                 <label class="ap-label">Featured Description:</label>
-                <textarea name="featured_description" class="ap-textarea" rows="5"
+                <textarea name="star_description" class="ap-textarea" rows="5"
                           placeholder="Enter a featured description for this star alumni..."></textarea>
             </div>
             <div style="display:flex;gap:12px">
@@ -374,10 +420,94 @@
             </div>
         </form>
     </div>
+</div> -->
+{{-- Modal for Mark as Star (NEW) --}}
+<div class="modal-overlay" id="markStarModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('markStarModal')">✕</button>
+        <h3>Add as Star Alumni</h3>
+        <form method="POST" action="{{ route('admin.alumni.star', $user->id) }}">
+            @csrf
+            <div class="ap-group" style="margin-bottom:20px">
+                <label class="ap-label">Featured Description:</label>
+                <textarea name="star_description" class="ap-textarea" rows="5"
+                          placeholder="Enter a featured description for this star alumni..."></textarea>
+            </div>
+            <div style="display:flex;gap:12px">
+                <button type="submit" class="btn-teal">Save</button>
+                <button type="button" class="btn-outline-red" onclick="closeModal('markStarModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
 </div>
 
+{{-- Modal for Edit Star Description (NEW) --}}
+<div class="modal-overlay" id="editStarModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('editStarModal')">✕</button>
+        <h3>Edit Star Description</h3>
+        <form method="POST" action="{{ route('admin.alumni.updateStarDescription', $user->id) }}">
+            @csrf
+            <div class="ap-group" style="margin-bottom:20px">
+                <label class="ap-label">Featured Description:</label>
+                <textarea name="star_description" class="ap-textarea" rows="5"
+                          placeholder="Enter a featured description..." required>{{ $user->star_description }}</textarea>
+            </div>
+            <div style="display:flex;gap:12px">
+                <button type="submit" class="btn-teal">Update</button>
+                <button type="button" class="btn-outline-red" onclick="closeModal('editStarModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
 @push('scripts')
 <script>
+// ── Lightbox ──────────────────────────────────────────────────────────────────
+function openLightbox(url, label, ext) {
+    const overlay = document.getElementById('lightboxOverlay');
+    const inner   = document.getElementById('lightboxInner');
+    const lbl     = document.getElementById('lightboxLabel');
+
+    inner.innerHTML = ''; // clear previous
+    lbl.textContent = label;
+
+    if (ext.toLowerCase() === 'pdf') {
+        // PDF: can't embed reliably in all browsers — show a clean open button
+        inner.innerHTML = `
+            <div class="lightbox-pdf-msg">
+                <p>📄 PDF document cannot be previewed inline.</p>
+                <a href="${url}" target="_blank">Open PDF in new tab</a>
+            </div>`;
+    } else {
+        // Image
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = label;
+        inner.appendChild(img);
+    }
+
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden'; // prevent bg scroll
+}
+
+function closeLightbox() {
+    document.getElementById('lightboxOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function closeLightboxOnBg(e) {
+    // Close only if clicking the dark backdrop, not the image/content
+    if (e.target === document.getElementById('lightboxOverlay')) {
+        closeLightbox();
+    }
+}
+
+// Close on Escape key
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeLightbox();
+});
+
+// ── Edit toggle ───────────────────────────────────────────────────────────────
 let editing = false;
 
 const editableInputs   = ['inp_full_name','inp_email','inp_ccp','inp_phone','inp_ach','inp_fos','inp_fow'];
@@ -404,6 +534,33 @@ function toggleEdit() {
 
     document.getElementById('editActions').style.display = editing ? 'flex' : 'none';
 }
+
+
+// ── Modal helpers for star management ────────────────────────────
+function openMarkStarModal() {
+    document.getElementById('markStarModal').classList.add('open');
+}
+function openEditStarModal() {
+    document.getElementById('editStarModal').classList.add('open');
+}
+function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+}
+// Close modals on Escape key
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeModal('markStarModal');
+        closeModal('editStarModal');
+    }
+});
+// Close by clicking the overlay background
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('open');
+        }
+    });
+});
 </script>
 @endpush
 @endsection

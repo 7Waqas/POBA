@@ -3,13 +3,16 @@
 @section('title','Events - POBA')
 @section('content')
 
-<div class="page-header">
-    <h1>Events</h1>
-    <div class="underline"></div>
-</div>
-
-<section class="section-pad">
+<section class="section-pad" style="padding-top: 40px;">
     <div class="container">
+        
+        {{-- Clean & Centered Page Title with Full Text Underline --}}
+        <div style="text-align: center; margin-bottom: 40px;">
+            <h1 style="font-size: 2.5rem; font-weight: 700; color: #086666; display: inline-block; padding-bottom: 8px; border-bottom: 4px solid var(--orange); line-height: 1.2;">
+                Events
+            </h1>
+        </div>
+
         <div class="tab-btns">
             <button class="tab-btn active" id="btnUpcoming" onclick="showTab('upcoming')">Upcoming</button>
             <button class="tab-btn" id="btnPrevious" onclick="showTab('previous')">Previous</button>

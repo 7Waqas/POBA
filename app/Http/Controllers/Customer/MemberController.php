@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Notifications\AlumniRegistrationReceived;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class MemberController extends Controller
 {
@@ -21,7 +23,8 @@ class MemberController extends Controller
         $request->validate([
             'full_name'       => 'required|string|max:255',
             'email'           => 'required|email|unique:alumni_users,email',
-            'phone_number'    => 'required|string|max:20',
+            'phone_code'      => 'required|string|in:+92,+1,+44,+971,+966,+91,+86,+81,+61,+49,+33,+39,+34,+55,+27',
+            'phone_number'    => ['required', 'string', 'regex:/^[0-9]+$/'],
             'entry'           => 'required|string|max:20',
             'ccp_no'          => 'required|string|max:50',
             'house'           => 'required|string|max:100',
@@ -34,31 +37,47 @@ class MemberController extends Controller
             'profile_photo'   => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
             'consent_sharing' => 'accepted',
             'agree_terms'     => 'accepted',
+        ], [
+            'phone_number.regex' => 'The phone number must contain only digits.',
         ]);
 
-        $data             = $request->except(['_token', 'profile_photo', 'cnic_file', 'privacy_hide']);
-        $data['password'] = \Illuminate\Support\Str::random(10); // placeholder; real one set on approval
-        $data['status']   = 'pending';
-        $data['is_active'] = false;
+        // ── Combine phone code and number ─────────────────────────────────────
+        $fullPhone = $request->phone_code . $request->phone_number;
 
-        if ($request->hasFile('profile_photo')) {
-            $data['profile_photo'] = $request->file('profile_photo')->store('profiles', 'public');
-        }
+        // ── Prepare data (exclude files and privacy, they are handled later) ──
+        $data = $request->except(['_token', 'profile_photo', 'cnic_file', 'privacy_hide', 'phone_code']);
+        $data['phone_number'] = $fullPhone;          // store full number
+        $data['password']     = \Illuminate\Support\Str::random(10); // placeholder
+        $data['status']       = 'pending';
+        $data['is_active']    = false;
 
-        if ($request->hasFile('cnic_file')) {
-            $data['cnic_file'] = $request->file('cnic_file')->store('cnics', 'public');
-        }
-
-        if ($request->privacy_hide) {
+        if ($request->filled('privacy_hide')) {
             $data['privacy_settings'] = $request->privacy_hide;
         }
 
+        // ── Create alumni record ──────────────────────────────────────────────
         $alumni = AlumniUser::create($data);
 
-        // Notify all Super Admins about new registration
+        // ── Store files using the alumni ID and timestamp ─────────────────────
+        if ($request->hasFile('profile_photo')) {
+            $ext      = $request->file('profile_photo')->getClientOriginalExtension();
+            $filename = 'profile_' . $alumni->id . '_' . time() . '.' . $ext;
+            $request->file('profile_photo')->storeAs('profiles', $filename, 'public');
+            $alumni->update(['profile_photo' => 'profiles/' . $filename]);
+        }
+
+        if ($request->hasFile('cnic_file')) {
+            $ext      = $request->file('cnic_file')->getClientOriginalExtension();
+            $filename = 'cnic_' . $alumni->id . '_' . time() . '.' . $ext;
+            $request->file('cnic_file')->storeAs('cnics', $filename, 'public');
+            $alumni->update(['cnic_file' => 'cnics/' . $filename]);
+        }
+
+        // ── Notify all Super Admins about new registration ────────────────────
         $superAdmins = User::where('role', 'superadmin')->get();
         Notification::send($superAdmins, new AlumniRegistrationReceived($alumni));
 
-        return back()->with('success', 'Your application has been submitted successfully! You will receive an email once your account is approved.');
+        return redirect()->route('home')
+                         ->with('registration_success', 'Your application has been submitted successfully! You will receive an email once your account is approved.');
     }
 }

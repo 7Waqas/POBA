@@ -51,7 +51,7 @@ class AlumniUserController extends Controller
         return view('admin.alumni.show', compact('user'));
     }
 
-    // ── Edit alumni profile ───────────────────────────────────────────────────
+    // ── Update alumni profile ─────────────────────────────────────────────────
 
     public function update(Request $request, $id)
     {
@@ -59,13 +59,31 @@ class AlumniUserController extends Controller
         $data = $request->except(['_token', '_method', 'profile_photo', 'cnic_file']);
 
         if ($request->hasFile('profile_photo')) {
-            if ($user->profile_photo) Storage::disk('public')->delete($user->profile_photo);
-            $data['profile_photo'] = $request->file('profile_photo')->store('profiles', 'public');
+            // Delete old file if exists
+            if ($user->profile_photo) {
+                Storage::disk('public')->delete($user->profile_photo);
+            }
+            // Meaningful name: profile_{user_id}_{timestamp}.{ext}
+            // e.g. profile_42_1718123456.jpg
+            // Using user ID ensures it's always tied to the right person.
+            // Timestamp ensures no collision on re-upload.
+            $ext = $request->file('profile_photo')->getClientOriginalExtension();
+            $filename = 'profile_' . $user->id . '_' . time() . '.' . $ext;
+            $request->file('profile_photo')->storeAs('profiles', $filename, 'public');
+            $data['profile_photo'] = 'profiles/' . $filename;
         }
 
         if ($request->hasFile('cnic_file')) {
-            if ($user->cnic_file) Storage::disk('public')->delete($user->cnic_file);
-            $data['cnic_file'] = $request->file('cnic_file')->store('cnics', 'public');
+            // Delete old file if exists
+            if ($user->cnic_file) {
+                Storage::disk('public')->delete($user->cnic_file);
+            }
+            // Meaningful name: cnic_{user_id}_{timestamp}.{ext}
+            // e.g. cnic_42_1718123456.png
+            $ext = $request->file('cnic_file')->getClientOriginalExtension();
+            $filename = 'cnic_' . $user->id . '_' . time() . '.' . $ext;
+            $request->file('cnic_file')->storeAs('cnics', $filename, 'public');
+            $data['cnic_file'] = 'cnics/' . $filename;
         }
 
         $user->update($data);
@@ -131,6 +149,33 @@ class AlumniUserController extends Controller
 
         return back()->with('success', "{$user->full_name} marked as Star Alumni.");
     }
+
+// ── Update Star Description (without toggling star status) ──
+public function updateStarDescription(Request $request, $id)
+{
+    $request->validate([
+        'star_description' => 'required|string|max:1000',
+    ]);
+
+    $user = AlumniUser::findOrFail($id);
+    $user->update([
+        'star_description' => $request->star_description,
+    ]);
+
+    return back()->with('success', "Star description updated for {$user->full_name}.");
+}
+
+// ── Remove Star Status ────────────────────────────────────────────
+public function removeStar($id)
+{
+    $user = AlumniUser::findOrFail($id);
+    $user->update([
+        'is_star_alumni'   => false,
+        'star_description' => null, // optional – clear the description
+    ]);
+
+    return back()->with('success', "{$user->full_name} is no longer a Star Alumni.");
+}
 
     // ── Export CSV ────────────────────────────────────────────────────────────
 
