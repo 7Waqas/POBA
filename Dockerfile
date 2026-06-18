@@ -11,12 +11,17 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . .
 
+# FIX: Create missing directories explicitly so Laravel doesn't crash
+RUN mkdir -p /var/www/html/bootstrap/cache /var/www/html/storage/framework/views /var/www/html/storage/framework/cache /var/www/html/storage/framework/sessions
+
+# FIX: Grant ownership BEFORE running composer install
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Set permissions for Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Run composer as the proper www-data user or let it optimize safely now
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 EXPOSE 80
 
