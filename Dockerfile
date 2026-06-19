@@ -33,6 +33,11 @@ WORKDIR /var/www/html
 # Copy existing application directory
 COPY . /var/www/html
 
+# Create cache and storage directories if they don't exist and set permissions upfront
+RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
