@@ -49,13 +49,5 @@ RUN chown -R www-data:www-data /var/www/html \
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
-# Copy .env file
-COPY .env.example .env
-
-# Generate key
-RUN php artisan key:generate
-
-# Clear cache
-RUN php artisan config:clear && php artisan cache:clear
 
 EXPOSE 80
